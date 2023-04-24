@@ -35,6 +35,7 @@ def select_pdf_files(directory: str) -> list[str]:
                 choice = input(
                     "Введите номер файла, который хотите выбрать (или 'all' для выбора всех файлов, или '0' для выхода): ")
                 if choice == '0':
+                    print("Отмена операции")
                     break
                 elif choice == 'all':
                     selected_files = files
@@ -120,7 +121,7 @@ def cut_image(image_path):
     # Создаем папку с именем начального файла без расширения, если ее нет
     folder_name = os.path.basename(base_name)
     if not os.path.exists(folder_name):
-        os.makedirs(folder_name)
+        os.makedirs(folder_name, exist_ok=True)
 
     # Нарезаем исходное изображение на 16 равных картинок
     for i in range(4):
@@ -135,7 +136,7 @@ def cut_image(image_path):
             photo = image.crop((left, top, right, bottom))
 
             # Формируем имя файла для сохранения
-            file_name = f"{folder_name}/{base_name}_photo_{i + 1}_{j + 1}.jpg"
+            file_name = f"{folder_name}/{folder_name}_photo_{i + 1}_{j + 1}.jpeg"
 
             # Сохраняем фотографию в отдельный файл
             photo.save(file_name)
