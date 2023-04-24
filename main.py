@@ -140,8 +140,44 @@ def cut_image(image_path):
 
             # Сохраняем фотографию в отдельный файл
             photo.save(file_name)
+            
+            if is_white_image(file_name, white_threshold=30):
+                os.remove(file_name)
 
     print("Файл успешно нарезан на 16 равных картинок.")
+
+
+def is_white_image(image_path, white_threshold=30):
+    """
+    Проверяет, является ли изображение белым.
+
+    Аргументы:
+    - image_path (str): Путь к изображению.
+    - white_threshold (int): Порог для определения "белого" цвета. По умолчанию: 30.
+
+    Возвращает:
+    - bool: True, если изображение является белым, иначе False.
+    """
+    # Открываем изображение
+    image = Image.open(image_path)
+
+    # Получаем пиксели изображения
+    pixels = image.load()
+
+    # Проверяем наличие пикселей, отличных от белого
+    is_white = True
+    for x in range(image.width):
+        for y in range(image.height):
+            # Получаем значения красного, зеленого и синего цветов пикселя
+            r, g, b = pixels[x, y]
+            if abs(r - 255) > white_threshold or abs(g - 255) > white_threshold or abs(b - 255) > white_threshold:
+                # Проверяем отклонение значений цветов от белого с порогом
+                is_white = False
+                break
+        if not is_white:
+            break
+
+    return is_white
 
 
 def main():
