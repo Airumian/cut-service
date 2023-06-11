@@ -8,17 +8,6 @@ pdf_local_directory = f"{os.getcwd()}/PDF"
 
 
 def select_pdf_files(directory: str) -> list[str]:
-    """
-    Позволяет пользователю выбрать один или несколько PDF-файлов из заданной директории.
-
-    Аргументы:
-    - directory: строка с путем к локальной директории, в которой нужно выбрать PDF-файлы.
-
-    Возвращает:
-    - Список с выбранными файлами (названия файлов).
-      Если пользователь выбрал все файлы, то возвращается список со всеми файлами в директории.
-      Если пользователь не выбрал ни одного файла, возвращается пустой список.
-    """
     files = glob.glob(os.path.join(directory, "*.pdf"))
 
     if not files:
@@ -52,24 +41,15 @@ def select_pdf_files(directory: str) -> list[str]:
                         selected_files.append(selected_file)
             except ValueError:
                 print("Некорректный выбор. Попробуйте еще раз.")
-            return [os.path.basename(file) for file in selected_files]
+    return [os.path.basename(file) for file in selected_files]
 
 
 def convert_pdf_to_image(pdf_files, zoom_x=2.0, zoom_y=2.0):
-    """
-    Конвертирует PDF в изображения формата JPEG.
-
-    Аргументы:
-    pdf_files (List[str]): Имена PDF-файлов в папке "PDF".
-    zoom_x (float): Масштаб по оси X (по умолчанию 2.0).
-    zoom_y (float): Масштаб по оси Y (по умолчанию 2.0).
-    """
     pdf_folder = "PDF"  # Имя папки с PDF-файлами
-    jpeg_folder = "IMAGES"  # Имя папки для сохранения JPEG-изображений
+    png_folder = "IMAGES"
 
-    if not os.path.exists(jpeg_folder):
-        # Создаем папку "JPEG", если она не существует
-        os.makedirs(jpeg_folder)
+    if not os.path.exists(png_folder):
+        os.makedirs(png_folder)
 
     for pdf_file in pdf_files:
         # Соединяем имя файла с путем к папке "PDF"
@@ -82,28 +62,18 @@ def convert_pdf_to_image(pdf_files, zoom_x=2.0, zoom_y=2.0):
             page = pdf.load_page(page_idx)
             pix = page.get_pixmap(matrix=fitz.Matrix(zoom_x, zoom_y))
             image = Image.frombytes(
-                "RGB", [pix.width, pix.height], pix.samples)
+                "RGB", [pix.width, pix.height], pix.samples).convert("RGB")
             # Изменяем имя файла для каждой страницы
-            output_filename = f"{os.path.splitext(pdf_file)[0]}.jpeg"
-            # Соединяем имя файла с путем к папке "JPEG"
-            output_path = os.path.join(jpeg_folder, output_filename)
+            output_filename = f"{os.path.splitext(pdf_file)[0]}.png"
+            output_path = os.path.join(png_folder, output_filename)
             image.save(output_path)
         pdf.close()
 
 
 def cut_image(image_path):
-    """
-    Функция для нарезания исходного изображения на отдельные фотографии.
-
-    Аргументы:
-        - image_path (str): Путь к исходному JPEG-файлу.
-    """
-
     # Формируем полный путь к файлу в папке IMAGES
     image_path = os.path.join("IMAGES", image_path)
-
-    # Открываем исходный JPEG-файл
-    image = Image.open(image_path)
+    image = Image.open(image_path).convert("RGB")
 
     # Определяем размеры исходного изображения
     width, height = image.size
@@ -136,11 +106,11 @@ def cut_image(image_path):
             photo = image.crop((left, top, right, bottom))
 
             # Формируем имя файла для сохранения
-            file_name = f"{folder_name}/{folder_name}_photo_{i + 1}_{j + 1}.jpeg"
+            file_name = f"{folder_name}/{folder_name}_photo_{i + 1}_{j + 1}.png"
 
             # Сохраняем фотографию в отдельный файл
             photo.save(file_name)
-            
+
             if is_white_image(file_name, white_threshold=30):
                 os.remove(file_name)
 
@@ -148,16 +118,6 @@ def cut_image(image_path):
 
 
 def is_white_image(image_path, white_threshold=30):
-    """
-    Проверяет, является ли изображение белым.
-
-    Аргументы:
-    - image_path (str): Путь к изображению.
-    - white_threshold (int): Порог для определения "белого" цвета. По умолчанию: 30.
-
-    Возвращает:
-    - bool: True, если изображение является белым, иначе False.
-    """
     # Открываем изображение
     image = Image.open(image_path)
 
@@ -184,13 +144,12 @@ def main():
     pdf_file = select_pdf_files(pdf_local_directory)
     if pdf_file != None:
         convert_pdf_to_image(pdf_file)
-        for jpeg in pdf_file:
+        for png in pdf_file:
             # Обрезаем окончание ".pdf"
-            if jpeg.endswith(".pdf"):
-                jpeg = jpeg[:-4]
-            # Добавляем новое окончание ".jpeg"
-            jpeg += ".jpeg"
-            cut_image(jpeg)
+            if png.endswith(".pdf"):
+                png = png[:-4]
+            png += ".png"
+            cut_image(png)
     else:
         print("PDF-файл не найден")
 
